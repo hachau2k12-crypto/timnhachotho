@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm Nhà Cho Thỏ - Trò Chơi Toán Học Vui Nhộn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #fae8ff 100%);
+            min-height: 100vh;
+        }
+        .bunny-bounce {
+            animation: bounce 2s infinite ease-in-out;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .star-pop {
+            animation: starPop 0.8s ease-out forwards;
+        }
+        @keyframes starPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .house-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .house-card:hover {
+            transform: translateY(-5px) scale(1.03);
+        }
+    </style>
+</head>
+<body class="text-slate-700 flex flex-col min-h-screen">
+
+    <header class="bg-white/80 backdrop-blur-md shadow-sm py-4 px-6 sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-pink-500 text-white p-2 rounded-2xl shadow-md bunny-bounce">
+                    <i class="fa-solid fa-rabbit text-2xl"></i>
+                </div>
+                <h1 class="text-xl md:text-2xl font-bold text-pink-600 tracking-wide">Tìm Nhà Cho Thỏ</h1>
+            </div>
+            <div id="userInfoHeader" class="hidden flex items-center space-x-4">
+                <span class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-full text-sm font-semibold flex items-center shadow-inner">
+                    <i class="fa-solid fa-user mr-1.5 text-amber-600"></i> <span id="displayNameHeader"></span>
+                </span>
+                <span class="bg-yellow-100 text-amber-800 px-3 py-1.5 rounded-full text-sm font-bold flex items-center shadow-inner">
+                    <i class="fa-solid fa-star text-yellow-500 mr-1.5 animate-spin"></i> <span id="displayStarsHeader">0</span> ngôi sao
+                </span>
+                <button onclick="logout()" class="text-slate-400 hover:text-red-500 transition p-2" title="Đổi tên / Thoát">
+                    <i class="fa-solid fa-right-from-bracket text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 md:p-6 flex flex-col justify-center items-center">
+
+        <!-- MÀN HÌNH 1: ĐĂNG NHẬP TÊN -->
+        <div id="loginScreen" class="bg-white/90 backdrop-blur-md rounded-3xl shadow-xl p-8 max-w-md w-full text-center border-4 border-pink-200">
+            <div class="w-24 h-24 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-6 bunny-bounce text-pink-500 text-5xl shadow-inner">
+                🐰
+            </div>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">Chào bạn nhỏ!</h2>
+            <p class="text-slate-500 mb-6 text-sm">Hãy nhập tên của con để giúp các chú thỏ tìm đúng ngôi nhà nha!</p>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-pink-400">
+                        <i class="fa-solid fa-signature"></i>
+                    </span>
+                    <input type="text" id="playerNameInput" required placeholder="Ví dụ: Bé Na, Minh Quân..." 
+                        class="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-pink-100 rounded-2xl focus:outline-none focus:border-pink-500 focus:bg-white text-base font-medium transition">
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold rounded-2xl shadow-lg shadow-pink-500/30 hover:opacity-95 active:scale-95 transition text-lg flex items-center justify-center space-x-2">
+                    <span>Vào Chơi Ngay</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- MÀN HÌNH 2: TRÒ CHƠI CHÍNH -->
+        <div id="gameScreen" class="hidden w-full max-w-2xl bg-white/90 backdrop-blur-md rounded-3xl shadow-xl p-6 md:p-8 border-4 border-purple-200 flex flex-col items-center">
+            
+            <!-- Tiến độ & Thống kê -->
+            <div class="w-full flex justify-between items-center mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div class="flex items-center space-x-2">
+                    <span class="bg-purple-100 text-purple-700 font-bold px-3 py-1 rounded-xl text-sm">
+                        Câu <span id="currentQuestionNum">1</span>/6
+                    </span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center text-amber-500 font-bold text-lg bg-amber-50 px-3 py-1 rounded-xl border border-amber-100">
+                        <i class="fa-solid fa-star mr-1.5 animate-bounce"></i>
+                        <span id="gameStars">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cảnh Thỏ và Phép Tính -->
+            <div class="relative w-full bg-gradient-to-b from-sky-100 to-emerald-50 rounded-2xl p-6 text-center mb-6 shadow-inner border border-sky-200 overflow-hidden">
+                <div class="absolute -top-6 -right-6 text-sky-200/50 text-9xl pointer-events-none select-none">
+                    <i class="fa-solid fa-cloud"></i>
+                </div>
+                <div class="absolute -bottom-4 -left-4 text-emerald-200/50 text-7xl pointer-events-none select-none">
+                    <i class="fa-solid fa-seedling"></i>
+                </div>
+                
+                <div class="text-6xl mb-3 bunny-bounce relative z-10">🐰🥕</div>
+                <h3 class="text-slate-600 font-semibold mb-1 text-sm uppercase tracking-wider relative z-10">Phép tính của chú thỏ:</h3>
+                <div class="text-4xl md:text-5xl font-extrabold text-purple-700 tracking-wider mb-2 relative z-10" id="questionExpression">
+                    11 - 8 = ?
+                </div>
+                <p class="text-xs text-slate-500 relative z-10">Hãy chọn ngôi nhà có kết quả chính xác để thỏ về nhà!</p>
+            </div>
+
+            <!-- Các lựa chọn Ngôi Nhà (Đáp án) -->
+            <div id="choicesContainer" class="grid grid-cols-2 gap-4 w-full mb-4">
+                <!-- Được render động bằng JS -->
+            </div>
+
+            <!-- Thông báo phản hồi đúng/sai -->
+            <div id="feedbackBox" class="hidden w-full mt-2 p-4 rounded-2xl text-center font-medium text-lg transition-all shadow-sm">
+            </div>
+        </div>
+
+        <!-- MÀN HÌNH 3: KẾT QUẢ & BẢNG XẾP HẠNG -->
+        <div id="resultScreen" class="hidden w-full max-w-2xl bg-white/90 backdrop-blur-md rounded-3xl shadow-xl p-6 md:p-8 border-4 border-amber-200 flex flex-col items-center">
+            <div class="text-6xl mb-3 star-pop">🎉</div>
+            <h2 class="text-3xl font-extrabold text-purple-700 mb-2 text-center">Chúc Mừng Hoàn Thành!</h2>
+            <p class="text-slate-500 mb-6 text-center text-sm">Bé đã giúp các chú thỏ tìm được tất cả ngôi nhà an toàn.</p>
+
+            <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-2xl p-5 w-full flex items-center justify-around mb-6 shadow-inner">
+                <div class="text-center">
+                    <span class="block text-xs text-slate-500 uppercase font-bold mb-1">Tổng điểm sao</span>
+                    <span class="text-3xl font-black text-amber-600 flex items-center justify-center">
+                        <i class="fa-solid fa-star text-yellow-500 mr-2"></i> <span id="finalStars">0</span> / 6
+                    </span>
+                </div>
+                <div class="h-10 w-px bg-amber-200"></div>
+                <div class="text-center">
+                    <span class="block text-xs text-slate-500 uppercase font-bold mb-1">Xếp loại</span>
+                    <span id="finalRankText" class="text-lg font-bold text-purple-600">Xuất Sắc 🌟</span>
+                </div>
+            </div>
+
+            <!-- Bảng xếp hạng trực tuyến -->
+            <div class="w-full bg-slate-50 rounded-2xl p-5 border border-slate-200 mb-6 shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-700 flex items-center text-lg">
+                        <i class="fa-solid fa-trophy text-yellow-500 mr-2"></i> Bảng Xếp Hạng Online
+                    </h3>
+                    <button onclick="promptClearLeaderboard()" class="text-xs bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1.5 rounded-xl font-bold transition flex items-center shadow-xs">
+                        <i class="fa-solid fa-trash-can mr-1"></i> Xóa Bảng Xếp Hạng
+                    </button>
+                </div>
+                <div id="leaderboardList" class="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                    <div class="text-center py-4 text-slate-400 text-sm">Đang tải bảng xếp hạng...</div>
+                </div>
+            </div>
+
+            <div class="flex space-x-4 w-full">
+                <button onclick="restartGame()" class="flex-1 py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold rounded-2xl shadow-lg shadow-pink-500/30 hover:opacity-95 active:scale-95 transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>Chơi Lại Lần Nữa</span>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal nhập mã PIN bảo mật xóa bảng xếp hạng -->
+    <div id="pinModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl border-4 border-pink-200 text-center animate-bounce-in">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500 text-2xl shadow-inner">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Xác Nhận Xóa Bảng Xếp Hạng</h3>
+            <p class="text-slate-500 text-xs mb-4">Vui lòng nhập mã bảo vệ (Mã mặc định: <span class="font-bold text-slate-700">1234</span>) để tiếp tục:</p>
+            
+            <form onsubmit="verifyAndClear(event)" class="space-y-4">
+                <input type="password" id="pinInput" maxlength="4" placeholder="Nhập mã 4 chữ số" required
+                    class="w-full text-center tracking-widest text-2xl py-3 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-red-500 font-bold transition">
+                <div id="pinErrorMsg" class="hidden text-xs text-rose-500 font-bold"></div>
+                <div class="flex space-x-2">
+                    <button type="button" onclick="closePinModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition">
+                        Hủy
+                    </button>
+                    <button type="submit" class="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-md transition">
+                        Xác Nhận Xóa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="py-4 text-center text-slate-400 text-xs">
+        Trò chơi toán học học sinh tiểu học • Hỗ trợ đa thiết bị cùng lúc 🐰✨
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Setup
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'bunny-math-game-v1';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "mock", projectId: "mock" };
+
+        let app, db, auth;
+        let currentUser = null;
+        let isFirebaseInitialized = false;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            isFirebaseInitialized = true;
+        } catch(e) {
+            console.warn("Firebase initialization warning or offline mode:", e);
+        }
+
+        // Danh sách câu hỏi gốc theo yêu cầu
+        const rawQuestions = [
+            { id: 1, expr: "11 - 8", ans: 3 },
+            { id: 2, expr: "11 - 7", ans: 4 },
+            { id: 3, expr: "13 - 5", ans: 8 },
+            { id: 4, expr: "11 - 5", ans: 6 },
+            { id: 5, expr: "11 - 6", ans: 5 },
+            { id: 6, expr: "11 - 4", ans: 7 }
+        ];
+
+        let gameQuestions = [];
+        let currentIdx = 0;
+        let score = 0;
+        let playerName = "";
+        let audioCtx = null;
+
+        // Khởi tạo âm thanh Web Audio API (Tiếng "tinh tinh" vui tai)
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playDingSound() {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                // Tạo nốt nhạc cao vui tai (như tiếng tinh tinh chuông)
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+                osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.15); // A6
+                
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            } catch(e) {
+                console.log("Audio play error:", e);
+            }
+        }
+
+        // Xử lý xác thực Firebase và Đăng nhập
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (isFirebaseInitialized) {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    currentUser = auth.currentUser;
+                } catch (e) {
+                    console.error("Auth error:", e);
+                }
+            }
+            
+            // Khởi tạo lắng nghe bảng xếp hạng thời gian thực
+            setupLeaderboardListener();
+        });
+
+        window.handleLogin = function(event) {
+            event.preventDefault();
+            const input = document.getElementById('playerNameInput');
+            playerName = input.value.trim();
+            if(!playerName) return;
+
+            initAudio();
+
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('userInfoHeader').classList.remove('hidden');
+            document.getElementById('displayNameHeader').innerText = playerName;
+
+            startGame();
+        }
+
+        window.logout = function() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('userInfoHeader').classList.add('hidden');
+            document.getElementById('playerNameInput').value = "";
+        }
+
+        function startGame() {
+            currentIdx = 0;
+            score = 0;
+            document.getElementById('gameStars').innerText = score;
+            document.getElementById('displayStarsHeader').innerText = score;
+            
+            // Xáo trộn thứ tự các câu hỏi sau mỗi lượt chơi
+            gameQuestions = JSON.parse(JSON.stringify(rawQuestions));
+            shuffleArray(gameQuestions);
+            
+            loadQuestion();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function loadQuestion() {
+            if (currentIdx >= gameQuestions.length) {
+                endGame();
+                return;
+            }
+
+            document.getElementById('currentQuestionNum').innerText = currentIdx + 1;
+            const q = gameQuestions[currentIdx];
+            document.getElementById('questionExpression').innerText = `${q.expr} = ?`;
+            
+            // Ẩn thông báo phản hồi cũ
+            const fb = document.getElementById('feedbackBox');
+            fb.classList.add('hidden');
+            fb.className = "hidden w-full mt-2 p-4 rounded-2xl text-center font-medium text-lg transition-all shadow-sm";
+
+            // Tạo các đáp án (1 đúng, 3 sai) và xáo trộn vị trí ngẫu nhiên (không cố định vị trí B hoặc C)
+            const correctAns = q.ans;
+            let options = [correctAns];
+            
+            // Các giá trị nhiễu hợp lý xung quanh kết quả
+            while(options.length < 4) {
+                let offset = Math.floor(Math.random() * 5) - 2; // -2 đến +2
+                let wrongAns = correctAns + offset;
+                if (wrongAns < 0) wrongAns = correctAns + Math.abs(offset) + 1;
+                if (!options.includes(wrongAns)) {
+                    options.push(wrongAns);
+                }
+            }
+            
+            shuffleArray(options); // Xáo trộn vị trí đáp án để chống ăn may
+
+            const container = document.getElementById('choicesContainer');
+            container.innerHTML = '';
+
+            const houseIcons = ['🏠', '🏡', '🏫', '🏰'];
+
+            options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "house-card bg-gradient-to-br from-white to-pink-50 border-2 border-pink-200 hover:border-pink-500 p-4 rounded-2xl shadow-md flex items-center justify-between group cursor-pointer transition transform active:scale-95";
+                btn.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">${houseIcons[idx % houseIcons.length]}</span>
+                        <div class="text-left">
+                            <span class="block text-xs font-semibold text-slate-400 uppercase">Ngôi nhà ${String.fromCharCode(65 + idx)}</span>
+                            <span class="text-2xl font-bold text-slate-800 group-hover:text-pink-600">${opt}</span>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-500 font-bold group-hover:bg-pink-500 group-hover:text-white transition">
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </div>
+                `;
+                btn.onclick = () => handleAnswer(opt, correctAns, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(selected, correct, btnElem) {
+            // Vô hiệu hóa tất cả các nút để tránh click nhiều lần
+            const buttons = document.querySelectorAll('#choicesContainer button');
+            buttons.forEach(b => b.disabled = true);
+
+            const fb = document.getElementById('feedbackBox');
+            fb.classList.remove('hidden');
+
+            if (selected === correct) {
+                // Đúng
+                playDingSound();
+                score++;
+                document.getElementById('gameStars').innerText = score;
+                document.getElementById('displayStarsHeader').innerText = score;
+
+                btnElem.className = "house-card bg-emerald-50 border-2 border-emerald-500 p-4 rounded-2xl shadow-md flex items-center justify-between";
+                fb.className = "w-full mt-2 p-4 rounded-2xl text-center font-bold text-lg bg-emerald-100 text-emerald-800 border border-emerald-300 star-pop";
+                fb.innerHTML = `<i class="fa-solid fa-circle-check mr-2 text-emerald-600"></i> Chính xác! Cộng 1 ngôi sao 🌟`;
+
+                setTimeout(() => {
+                    currentIdx++;
+                    loadQuestion();
+                }, 1500);
+
+            } else {
+                // Sai
+                btnElem.className = "house-card bg-rose-50 border-2 border-rose-500 p-4 rounded-2xl shadow-md flex items-center justify-between";
+                fb.className = "w-full mt-2 p-4 rounded-2xl text-center font-bold text-lg bg-rose-100 text-rose-800 border border-rose-300";
+                
+                // Tìm đúng nút đáp án để highlight cho học sinh nhận biết
+                buttons.forEach(b => {
+                    if (b.innerText.includes(correct)) {
+                        b.className = "house-card bg-emerald-50 border-2 border-emerald-500 p-4 rounded-2xl shadow-md flex items-center justify-between ring-2 ring-emerald-400";
+                    }
+                });
+
+                const currentQ = gameQuestions[currentIdx];
+                fb.innerHTML = `<i class="fa-solid fa-circle-xmark mr-2 text-rose-600"></i> Chưa đúng rồi! Bé xem lại: ${currentQ.expr} = ${correct} nhé! 🐰`;
+
+                setTimeout(() => {
+                    currentIdx++;
+                    loadQuestion();
+                }, 3000); // Dành thời gian lâu hơn cho bé đọc và sửa lại
+            }
+        }
+
+        async function endGame() {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            document.getElementById('finalStars').innerText = score;
+
+            let rankText = "Cần Cố Gắng Hơn 💪";
+            if (score === 6) rankText = "Xuất Sắc Tuyệt Vời 🌟";
+            else if (score >= 4) rankText = "Rất Tốt 👏";
+            else if (score >= 2) rankText = "Khá Lắm 👍";
+            document.getElementById('finalRankText').innerText = rankText;
+
+            // Lưu điểm lên Firestore để đồng bộ giữa các thiết bị
+            if (isFirebaseInitialized && db) {
+                try {
+                    const recordId = currentUser ? currentUser.uid + "_" + Date.now() : "guest_" + Math.random();
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', recordId), {
+                        name: playerName,
+                        score: score,
+                        timestamp: Date.now()
+                    });
+                } catch(e) {
+                    console.error("Save score error:", e);
+                }
+            }
+        }
+
+        // Bảng xếp hạng realtime
+        function setupLeaderboardListener() {
+            if (!isFirebaseInitialized || !db) {
+                document.getElementById('leaderboardList').innerHTML = '<div class="text-center py-4 text-slate-500 text-sm">Chế độ chơi đơn trên thiết bị (Local)</div>';
+                return;
+            }
+
+            try {
+                const qRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+                onSnapshot(qRef, (snapshot) => {
+                    let items = [];
+                    snapshot.forEach(docSnap => {
+                        items.push({ id: docSnap.id, ...docSnap.data() });
+                    });
+
+                    // Sắp xếp điểm giảm dần trên JavaScript memory (đảm bảo không dùng compound query bắt buộc index phức tạp)
+                    items.sort((a, b) => b.score - a.score || a.timestamp - b.timestamp);
+
+                    const listElem = document.getElementById('leaderboardList');
+                    if (items.length === 0) {
+                        listElem.innerHTML = '<div class="text-center py-4 text-slate-400 text-sm">Chưa có kết quả nào. Hãy là người đầu tiên!</div>';
+                        return;
+                    }
+
+                    listElem.innerHTML = '';
+                    items.slice(0, 10).forEach((item, index) => {
+                        const row = document.createElement('div');
+                        let medalColor = "text-slate-400 font-bold";
+                        if (index === 0) medalColor = "text-amber-500 font-extrabold text-lg";
+                        else if (index === 1) medalColor = "text-slate-400 font-extrabold";
+                        else if (index === 2) medalColor = "text-amber-700 font-extrabold";
+
+                        row.className = "flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-xs";
+                        row.innerHTML = `
+                            <div class="flex items-center space-x-3">
+                                <span class="w-6 text-center ${medalColor}">#${index + 1}</span>
+                                <span class="font-bold text-slate-700">${escapeHtml(item.name)}</span>
+                            </div>
+                            <div class="flex items-center text-amber-600 font-extrabold bg-amber-50 px-2.5 py-1 rounded-lg">
+                                <i class="fa-solid fa-star text-yellow-500 mr-1.5 text-xs"></i> ${item.score}/6
+                            </div>
+                        `;
+                        listElem.appendChild(row);
+                    });
+                }, (error) => {
+                    console.error("Leaderboard snapshot error:", error);
+                    document.getElementById('leaderboardList').innerHTML = '<div class="text-center py-4 text-slate-400 text-sm">Đang tải bảng xếp hạng trực tuyến...</div>';
+                });
+            } catch(e) {
+                console.error("Setup listener error:", e);
+            }
+        }
+
+        // Mở Modal Nhập Mã PIN
+        window.promptClearLeaderboard = function() {
+            if (!isFirebaseInitialized || !db) {
+                alertCustom("Bảng xếp hạng đang ở chế độ cục bộ.");
+                return;
+            }
+            document.getElementById('pinInput').value = "";
+            document.getElementById('pinErrorMsg').classList.add('hidden');
+            document.getElementById('pinModal').classList.remove('hidden');
+        }
+
+        // Đóng Modal Nhập Mã PIN
+        window.closePinModal = function() {
+            document.getElementById('pinModal').classList.add('hidden');
+        }
+
+        // Xác thực mã PIN (1234) và tiến hành xóa bảng xếp hạng trên Firebase
+        window.verifyAndClear = async function(event) {
+            event.preventDefault();
+            const pinVal = document.getElementById('pinInput').value.trim();
+            const errDiv = document.getElementById('pinErrorMsg');
+
+            if (pinVal !== "1234") {
+                errDiv.innerText = "Mã bảo vệ không chính xác! (Gợi ý: 1234)";
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Mã đúng, tiến hành xóa trên Firestore
+            closePinModal();
+            try {
+                const qRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+                const snapshot = await getDocs(qRef);
+                const deletePromises = [];
+                snapshot.forEach(docSnap => {
+                    deletePromises.push(deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', docSnap.id)));
+                });
+                await Promise.all(deletePromises);
+                document.getElementById('leaderboardList').innerHTML = '<div class="text-center py-4 text-slate-400 text-sm">Bảng xếp hạng đã được làm mới!</div>';
+            } catch(e) {
+                console.error("Clear leaderboard error:", e);
+                alertCustom("Không thể xóa bảng xếp hạng. Vui lòng thử lại sau.");
+            }
+        }
+
+        function alertCustom(msg) {
+            alert(msg);
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        window.restartGame = function() {
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            startGame();
+        }
+    </script>
+</body>
+</html>
